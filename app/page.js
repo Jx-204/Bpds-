@@ -416,7 +416,7 @@ export default function Home() {
                   Vaciar caneca
                 </button>
               </>
-            )}
+            )}  
           </div>
         </div>
       )}
