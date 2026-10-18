@@ -24,6 +24,12 @@ jobs:
       - name: Construir proyecto (Build)
         run: npm run build
 
+      - name: Verificar contenido de la carpeta de trabajo
+        run: |
+          pwd
+          ls -la
+          ls -la ./out || echo "La carpeta out no existe"
+
       - name: Configurar SSH
         run: |
           mkdir -p ~/.ssh
@@ -35,3 +41,4 @@ jobs:
         run: |
           rsync -avz --delete -e "ssh -i ~/.ssh/key.pem -o StrictHostKeyChecking=no" \
             ./out/ ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/var/www/html/
+            
