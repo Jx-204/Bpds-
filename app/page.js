@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import styles from "./page.module.css";
 
 const STORAGE_KEY = "student-todo-tasks";
-const TRASH_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 días en milisegundos
 const TRASH_STORAGE_KEY = "student-todo-trash";
 
 export default function Home() {
@@ -27,7 +26,6 @@ export default function Home() {
 
   // showTrash controla si el panel de la caneca está abierto.
   const [showTrash, setShowTrash] = useState(false);
-  const [trashAnimationKey, setTrashAnimationKey] = useState(0);
 
   // editingId guarda el id de la tarea que se está editando (null si ninguna).
   // editingText guarda el texto temporal mientras se edita.
@@ -62,13 +60,7 @@ export default function Home() {
         const parsedTrash = JSON.parse(savedTrash);
 
         if (Array.isArray(parsedTrash)) {
-          // Filtramos las tareas que ya pasaron los 30 días en la papelera.
-          const trashSinExpirar = parsedTrash.filter((item) => {
-            const tiempoTranscurrido = Date.now() - item.deletedAt;
-            return tiempoTranscurrido < TRASH_MAX_AGE_MS;
-          });
-
-          setDeletedTasks(trashSinExpirar);
+          setDeletedTasks(parsedTrash);
         }
       } catch {
         window.localStorage.removeItem(TRASH_STORAGE_KEY);
@@ -77,7 +69,7 @@ export default function Home() {
 
     setIsTrashLoaded(true);
   }, []);
-  
+
   useEffect(() => {
     if (isTasksLoaded) {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
@@ -93,7 +85,7 @@ export default function Home() {
   // filter guarda cuál filtro está activo: "all", "pending" o "completed".
   const [filter, setFilter] = useState("all");
 
-  // Esta función se ejecuta al presionar Enter en el campo de nueva tarea.
+  // Esta función se ejecuta cuando el usuario hace clic en "Agregar".
   const handleAddTask = () => {
     // Si el texto está vacío o solo tiene espacios, no agregamos nada.
     if (!task.trim()) {
@@ -139,7 +131,6 @@ export default function Home() {
       { ...tareaAEliminar, deletedAt: Date.now() },
       ...papeleraAnterior,
     ]);
-    setTrashAnimationKey((currentKey) => currentKey + 1);
   };
 
   // Devuelve una tarea de la caneca a la lista activa.
@@ -247,6 +238,10 @@ export default function Home() {
             }}
             aria-label="Nueva tarea"
           />
+
+          <button type="button" onClick={handleAddTask}>
+            Agregar
+          </button>
         </div>
 
         <div className={styles.filters}>
@@ -333,15 +328,11 @@ export default function Home() {
       {/* Botón flotante de la caneca / papelera */}
       <button
         type="button"
-        className={`${styles.trashButton} ${
-          deletedTasks.length > 0 ? styles.trashButtonHasItems : ""
-        }`}
+        className={styles.trashButton}
         onClick={() => setShowTrash(true)}
         aria-label="Ver tareas eliminadas"
       >
-        <span key={trashAnimationKey} className={styles.trashIcon}>
-          🗑️
-        </span>
+        <span className={styles.trashIcon}>🗑️</span>
         {deletedTasks.length > 0 && (
           <span className={styles.trashBadge}>{deletedTasks.length}</span>
         )}
@@ -376,19 +367,9 @@ export default function Home() {
                 <ul className={styles.list}>
                   {deletedTasks.map((item) => (
                     <li key={item.id} className={styles.taskItem}>
-  <div>
-    <span className={styles.completedText}>{item.text}</span>
-    <br />
-    <small>
-      {Math.max(
-        0,
-        Math.ceil((item.deletedAt + TRASH_MAX_AGE_MS - Date.now()) / (1000 * 60 * 60 * 24))
-      )}{" "}
-      días para eliminación permanente
-    </small>
-  </div>
+                      <span className={styles.completedText}>{item.text}</span>
 
-  <div className={styles.trashItemActions}>
+                      <div className={styles.trashItemActions}>
                         <button
                           type="button"
                           className={styles.restoreButton}
@@ -416,7 +397,7 @@ export default function Home() {
                   Vaciar caneca
                 </button>
               </>
-            )}  
+            )}
           </div>
         </div>
       )}
